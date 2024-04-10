@@ -9,6 +9,9 @@ commandline:
 retainFailedHooks: false
 
 env: {}
+extraEnvVars: []
+  # - name: SERVER_URL
+  #   value: "http://localhost:8080"
 
 files: {}
 

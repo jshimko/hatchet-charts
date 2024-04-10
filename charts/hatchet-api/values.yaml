@@ -1,14 +1,15 @@
 image:
   repository: "ghcr.io/hatchet-dev/hatchet/hatchet-api"
-  tag: "v0.14.0"
+  tag: "latest"
   pullPolicy: "Always"
 
 migrationJob:
   enabled: true
   image:
     repository: "ghcr.io/hatchet-dev/hatchet/hatchet-migrate"
-    tag: "v0.14.0"
+    tag: "latest"
     pullPolicy: "Always"
+  annotations: {}
 
 commandline:
   command: ["/hatchet/hatchet-api"]
@@ -27,6 +28,9 @@ cloudSQLSidecar:
 retainFailedHooks: false
 
 env: {}
+extraEnvVars: []
+  # - name: SERVER_URL
+  #   value: "http://localhost:8080"
 
 envFrom: []
 

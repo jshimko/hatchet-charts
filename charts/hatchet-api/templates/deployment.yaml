@@ -51,9 +51,10 @@ spec:
         {{- end }}
         env:
         {{- range $key, $value := .Values.env }}
-        - name: "{{ $key }}"
-          value: "{{ $value }}"
+          - name: "{{ $key }}"
+            value: "{{ $value }}"
         {{- end }}
+{{ toYaml .Values.extraEnvVars | nindent 10 }}
         envFrom:
 {{ toYaml .Values.envFrom | indent 10 }}
         ports:

@@ -57,7 +57,7 @@ spec:
             backend:
               {{- if .backend }}
               service:
-                name: {{  .backend.serviceName }}
+                name: {{ .backend.serviceName }}
                 port:
                   number: {{ .backend.servicePort }}
               {{- else -}}
