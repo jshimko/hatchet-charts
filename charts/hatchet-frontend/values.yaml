@@ -9,9 +9,18 @@ commandline:
 retainFailedHooks: false
 
 env: {}
-extraEnvVars: []
+extraEnvVars:
+  []
   # - name: SERVER_URL
   #   value: "http://localhost:8080"
+
+envFrom:
+  []
+  # - configMapRef:
+  #     name: my-custom-config
+  #
+  # - secretRef:
+  #     name: my-custom-secret
 
 files: {}
 

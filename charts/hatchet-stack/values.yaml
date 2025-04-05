@@ -19,7 +19,7 @@ sharedConfig:
 
 api:
   enabled: true
-  replicaCount: 2
+  replicaCount: 1
   image:
     repository: "ghcr.io/hatchet-dev/hatchet/hatchet-api"
     tag: "v0.58.0"
@@ -33,7 +33,7 @@ api:
   extraEnvVars: []
   # - name: SERVER_URL
   #   value: "http://localhost:8080"
-  envFrom:
+  deploymentEnvFrom:
     - secretRef:
         name: hatchet-shared-config
   ingress:

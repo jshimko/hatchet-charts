@@ -55,6 +55,8 @@ spec:
             value: "{{ $value }}"
         {{- end }}
 {{ toYaml .Values.extraEnvVars | nindent 10 }}
+        envFrom:
+{{ toYaml .Values.envFrom | nindent 10 }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
           name: "http"
