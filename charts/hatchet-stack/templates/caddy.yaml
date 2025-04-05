@@ -11,7 +11,7 @@ metadata:
 {{- end }}
 data:
   Caddyfile: |
-    http://localhost:{{ default 8080 .Values.caddy.externalPort }} {
+    http://localhost:{{ default 8080 .Values.caddy.port }} {
         handle /api/* {
             reverse_proxy {{ .Release.Name }}-api:8080
         }
@@ -45,7 +45,7 @@ spec:
       - name: caddy
         image: caddy:2.7.6-alpine
         ports:
-        - containerPort: 8080
+        - containerPort: {{ default 8080 .Values.caddy.port }}
         volumeMounts:
         - name: caddyfile-volume
           mountPath: /etc/caddy/Caddyfile
@@ -71,7 +71,7 @@ spec:
     app: caddy
   ports:
     - protocol: TCP
-      port: {{ default 8080 .Values.caddy.externalPort }}
-      targetPort: 8080
+      port: {{ default 8080 .Values.caddy.port }}
+      targetPort: {{ default 8080 .Values.caddy.port }}
   type: LoadBalancer
 {{- end -}}

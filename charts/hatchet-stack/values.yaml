@@ -160,4 +160,4 @@ rabbitmq:
 caddy:
   enabled: false
   annotations: {}
-  externalPort: 8080
+  port: 8080
