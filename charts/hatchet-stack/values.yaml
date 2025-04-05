@@ -98,7 +98,7 @@ engine:
     # SERVER_GRPC_BIND_ADDRESS: "0.0.0.0"
     # SERVER_GRPC_INSECURE: "true"
     # SERVER_GRPC_BROADCAST_ADDRESS: "localhost:7070"
-  envFrom:
+  deploymentEnvFrom:
     - secretRef:
         name: hatchet-shared-config
   ingress:
