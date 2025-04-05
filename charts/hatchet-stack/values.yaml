@@ -159,3 +159,5 @@ rabbitmq:
 
 caddy:
   enabled: false
+  annotations: {}
+  externalPort: 8080

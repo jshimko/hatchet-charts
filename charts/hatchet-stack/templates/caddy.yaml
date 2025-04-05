@@ -11,7 +11,7 @@ metadata:
 {{- end }}
 data:
   Caddyfile: |
-    http://localhost:8080 {
+    http://localhost:{{ default 8080 .Values.caddy.externalPort }} {
         handle /api/* {
             reverse_proxy {{ .Release.Name }}-api:8080
         }
@@ -71,7 +71,7 @@ spec:
     app: caddy
   ports:
     - protocol: TCP
-      port: 8080
+      port: {{ default 8080 .Values.caddy.externalPort }}
       targetPort: 8080
   type: LoadBalancer
 {{- end -}}
