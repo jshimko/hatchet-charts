@@ -56,7 +56,10 @@ spec:
         {{- end }}
 {{ toYaml .Values.extraEnvVars | nindent 10 }}
         envFrom:
-{{ toYaml .Values.envFrom | indent 10 }}
+{{ toYaml .Values.deploymentEnvFrom | nindent 10 }}
+{{- if .Values.envFrom }}
+{{ toYaml .Values.envFrom | nindent 10 }}
+{{- end }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
           name: {{ template "hatchet.name" . }}

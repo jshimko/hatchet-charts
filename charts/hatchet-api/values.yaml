@@ -1,15 +1,35 @@
 image:
   repository: "ghcr.io/hatchet-dev/hatchet/hatchet-api"
-  tag: "latest"
+  tag: "v0.58.0"
   pullPolicy: "Always"
+
+setupJob:
+  enabled: true
+  image:
+    repository: "ghcr.io/hatchet-dev/hatchet/hatchet-admin"
+    tag: "v0.58.0"
+    pullPolicy: "Always"
 
 migrationJob:
   enabled: true
   image:
     repository: "ghcr.io/hatchet-dev/hatchet/hatchet-migrate"
-    tag: "latest"
+    tag: "v0.58.0"
     pullPolicy: "Always"
   annotations: {}
+
+seedJob:
+  enabled: true
+  image:
+    repository: "ghcr.io/hatchet-dev/hatchet/hatchet-admin"
+    tag: "v0.58.0"
+    pullPolicy: "Always"
+
+quickstartJob:
+  enabled: true
+
+workerTokenJob:
+  enabled: true
 
 commandline:
   command: ["/hatchet/hatchet-api"]
@@ -28,9 +48,14 @@ cloudSQLSidecar:
 retainFailedHooks: false
 
 env: {}
-extraEnvVars: []
+extraEnvVars:
+  []
   # - name: SERVER_URL
   #   value: "http://localhost:8080"
+
+deploymentEnvFrom:
+  - secretRef:
+      name: hatchet-config
 
 envFrom: []
 

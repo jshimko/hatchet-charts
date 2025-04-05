@@ -30,9 +30,6 @@ api:
   serviceAccount:
     create: true
     name: hatchet-api
-  extraEnvVars: []
-  # - name: SERVER_URL
-  #   value: "http://localhost:8080"
   envFrom:
     - secretRef:
         name: hatchet-shared-config
@@ -54,9 +51,10 @@ api:
         periodSeconds: 5
         initialDelaySeconds: 20
 
-engine:
+grpc:
   enabled: true
-  nameOverride: engine
+  nameOverride: hatchet-grpc
+  fullnameOverride: hatchet-grpc
   replicaCount: 1
   image:
     repository: "ghcr.io/hatchet-dev/hatchet/hatchet-engine"
@@ -71,33 +69,10 @@ engine:
     command: ["/hatchet/hatchet-engine"]
   deployment:
     annotations:
-      app.kubernetes.io/name: hatchet-engine
+      app.kubernetes.io/name: hatchet-grpc
   serviceAccount:
     create: true
-    name: hatchet-engine
-  env:
-    {}
-    # SERVER_AUTH_COOKIE_DOMAIN: "localhost:8080"
-    # SERVER_URL: "http://localhost:8080"
-    # SERVER_AUTH_COOKIE_INSECURE: "t"
-    # SERVER_AUTH_SET_EMAIL_VERIFIED: "t"
-    # SERVER_LOGGER_LEVEL: "debug"
-    # SERVER_LOGGER_FORMAT: "console"
-    # DATABASE_LOGGER_LEVEL: "debug"
-    # DATABASE_LOGGER_FORMAT: "console"
-    # SERVER_AUTH_GOOGLE_ENABLED: "f"
-    # SERVER_AUTH_BASIC_AUTH_ENABLED: "t"
-    # DATABASE_URL: "postgres://hatchet:hatchet@hatchet-stack-postgres:5432/hatchet?sslmode=disable"
-    # DATABASE_POSTGRES_HOST: "hatchet-stack-postgres"
-    # DATABASE_POSTGRES_PORT: "5432"
-    # DATABASE_POSTGRES_USERNAME: "hatchet"
-    # DATABASE_POSTGRES_PASSWORD: "hatchet"
-    # DATABASE_POSTGRES_DB_NAME: "hatchet"
-    # DATABASE_POSTGRES_SSL_MODE: "disable"
-    # SERVER_TASKQUEUE_RABBITMQ_URL: "amqp://hatchet:hatchet@hatchet-stack-rabbitmq:5672/"
-    # SERVER_GRPC_BIND_ADDRESS: "0.0.0.0"
-    # SERVER_GRPC_INSECURE: "true"
-    # SERVER_GRPC_BROADCAST_ADDRESS: "localhost:7070"
+    name: hatchet-grpc
   envFrom:
     - secretRef:
         name: hatchet-shared-config
@@ -106,22 +81,104 @@ engine:
   health:
     enabled: true
     spec:
-      startupProbe:
-        httpGet:
-          path: /ready
-          port: 8733
-        periodSeconds: 2
-        failureThreshold: 60
-      readinessProbe:
-        httpGet:
-          path: /ready
-          port: 8733
-        periodSeconds: 5
       livenessProbe:
         httpGet:
           path: /live
           port: 8733
         periodSeconds: 5
+        initialDelaySeconds: 60
+      readinessProbe:
+        httpGet:
+          path: /ready
+          port: 8733
+        periodSeconds: 5
+        initialDelaySeconds: 20
+
+controllers:
+  enabled: true
+  nameOverride: controllers
+  fullnameOverride: controllers
+  replicaCount: 1
+  image:
+    repository: "ghcr.io/hatchet-dev/hatchet/hatchet-engine"
+    tag: "v0.58.0"
+    pullPolicy: "Always"
+  setupJob:
+    enabled: false
+  service:
+    externalPort: 7070
+    internalPort: 7070
+  commandline:
+    command: ["/hatchet/hatchet-engine"]
+  deployment:
+    annotations:
+      app.kubernetes.io/name: controllers
+  serviceAccount:
+    create: true
+    name: controllers
+  envFrom:
+    - secretRef:
+        name: hatchet-shared-config
+  ingress:
+    enabled: false
+  health:
+    enabled: true
+    spec:
+      livenessProbe:
+        httpGet:
+          path: /live
+          port: 8733
+        periodSeconds: 5
+        initialDelaySeconds: 60
+      readinessProbe:
+        httpGet:
+          path: /ready
+          port: 8733
+        periodSeconds: 5
+        initialDelaySeconds: 20
+
+scheduler:
+  enabled: true
+  nameOverride: scheduler
+  fullnameOverride: scheduler
+  replicaCount: 1
+  image:
+    repository: "ghcr.io/hatchet-dev/hatchet/hatchet-engine"
+    tag: "v0.58.0"
+    pullPolicy: "Always"
+  setupJob:
+    enabled: false
+  service:
+    externalPort: 7070
+    internalPort: 7070
+  commandline:
+    command: ["/hatchet/hatchet-engine"]
+  deployment:
+    annotations:
+      app.kubernetes.io/name: scheduler
+  serviceAccount:
+    create: true
+    name: scheduler
+  envFrom:
+    - secretRef:
+        name: hatchet-shared-config
+  ingress:
+    enabled: false
+  health:
+    enabled: true
+    spec:
+      livenessProbe:
+        httpGet:
+          path: /live
+          port: 8733
+        periodSeconds: 5
+        initialDelaySeconds: 60
+      readinessProbe:
+        httpGet:
+          path: /ready
+          port: 8733
+        periodSeconds: 5
+        initialDelaySeconds: 20
 
 frontend:
   enabled: true
