@@ -55,7 +55,7 @@ extraEnvVars:
 
 deploymentEnvFrom:
   - secretRef:
-      name: hatchet-config
+      name: hatchet-shared-config
 
 envFrom: []
 
