@@ -23,7 +23,7 @@ api:
   image:
     repository: "ghcr.io/hatchet-dev/hatchet/hatchet-api"
     tag: "v0.64.2"
-    pullPolicy: "Always"
+    pullPolicy: "IfNotPresent"
 
   migrationJob:
     image:
@@ -80,7 +80,7 @@ engine:
   image:
     repository: "ghcr.io/hatchet-dev/hatchet/hatchet-engine"
     tag: "v0.64.2"
-    pullPolicy: "Always"
+    pullPolicy: "IfNotPresent"
   setupJob:
     enabled: false
   service:
@@ -147,7 +147,7 @@ frontend:
   image:
     repository: "ghcr.io/hatchet-dev/hatchet/hatchet-frontend"
     tag: "v0.64.2"
-    pullPolicy: "Always"
+    pullPolicy: "IfNotPresent"
   service:
     externalPort: 8080
     internalPort: 80
