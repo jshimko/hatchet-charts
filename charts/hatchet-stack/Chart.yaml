@@ -30,6 +30,14 @@ dependencies:
     version: "^16.7.12"
     alias: postgres
 
+  # Postgres Operator - PostgresCluster
+  # Docs: https://access.crunchydata.com/documentation/postgres-operator/latest/
+  # Chart: https://github.com/jshimko/helm-charts/tree/main/charts/postgrescluster
+  - name: postgrescluster
+    version: "^5.8.2"
+    repository: https://jshimko.github.io/helm-charts
+    condition: postgrescluster.enabled
+
   # https://github.com/bitnami/charts/tree/main/bitnami/rabbitmq
   - name: "rabbitmq"
     condition: rabbitmq.enabled

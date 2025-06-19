@@ -65,7 +65,8 @@ spec:
           - name: "{{ $key }}"
             value: "{{ $value }}"
         {{- end }}
-        envFrom: 
+{{ toYaml .Values.extraEnvVars | indent 10 }}
+        envFrom:
 {{ toYaml .Values.envFrom | indent 10 }}
       {{- end }}
       {{- if .Values.seedJob.enabled }}
@@ -85,7 +86,8 @@ spec:
           - name: "{{ $key }}"
             value: "{{ $value }}"
         {{- end }}
-        envFrom: 
+{{ toYaml .Values.extraEnvVars | indent 10 }}
+        envFrom:
 {{ toYaml .Values.envFrom | indent 10 }}
       {{- end }}
       {{- if and (not .Values.migrationJob.enabled) (not .Values.seedJob.enabled) }}
@@ -107,7 +109,8 @@ spec:
           - name: "{{ $key }}"
             value: "{{ $value }}"
         {{- end }}
-        envFrom: 
+{{ toYaml .Values.extraEnvVars | indent 10 }}
+        envFrom:
 {{ toYaml .Values.envFrom | indent 10 }}
 {{- else }}
       # Write an empty container to avoid a syntax error
@@ -147,7 +150,8 @@ spec:
           - name: "{{ $key }}"
             value: "{{ $value }}"
         {{- end }}
-        envFrom: 
+{{ toYaml .Values.extraEnvVars | indent 10 }}
+        envFrom:
 {{ toYaml .Values.envFrom | indent 10 }}
       containers:
       - name: setup-worker-token
@@ -164,10 +168,9 @@ spec:
           - name: "{{ $key }}"
             value: "{{ $value }}"
         {{- end }}
-        envFrom: 
-{{ toYaml .Values.deploymentEnvFrom | nindent 10 }}
-{{- if .Values.envFrom }}
-{{ toYaml .Values.envFrom | nindent 10 }}
-{{- end }}
+{{ toYaml .Values.extraEnvVars | indent 10 }}
+        envFrom:
+{{ toYaml .Values.deploymentEnvFrom | indent 10 }}
+{{ toYaml .Values.envFrom | indent 10 }}
 {{- end }}
 {{- end }}
