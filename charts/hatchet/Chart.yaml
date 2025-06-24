@@ -1,0 +1,37 @@
+apiVersion: v2
+name: hatchet
+description: A Helm chart for a high availability Hatchet deployment. https://hatchet.run
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0
+
+# This is the version number of the application being deployed. This version number should match
+# the docker image tag for the version of Hatchet you are deploying. Unless overridden in the values file,
+# this will be the default image tag used for all Hatchet services in this chart.
+appVersion: "v0.64.2"
+
+dependencies:
+  # https://github.com/bitnami/charts/tree/main/bitnami/postgresql
+  - name: "postgresql"
+    condition: postgres.enabled
+    repository: "https://charts.bitnami.com/bitnami"
+    version: "^16.7.12"
+    alias: postgres
+
+  # Postgres Operator - PostgresCluster
+  # Docs: https://access.crunchydata.com/documentation/postgres-operator/latest/
+  # Chart: https://github.com/jshimko/helm-charts/tree/main/charts/postgrescluster
+  - name: postgrescluster
+    version: "^5.8.2"
+    repository: https://jshimko.github.io/helm-charts
+    condition: postgrescluster.enabled
+
+  # https://github.com/bitnami/charts/tree/main/bitnami/rabbitmq
+  - name: "rabbitmq"
+    condition: rabbitmq.enabled
+    repository: "https://charts.bitnami.com/bitnami"
+    version: "^16.0.8"
+    alias: rabbitmq
