@@ -4,7 +4,7 @@ kind: Service
 metadata:
   name: {{ include "hatchet.fullname" . }}-backend
   labels:
-    {{- include "hatchet.labels" . | nindent 4 }}
+    {{- include "hatchet.backend.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.backend.service.type }}
   ports:
@@ -13,5 +13,5 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "hatchet.selectorLabels" . | nindent 4 }}
+    {{- include "hatchet.backend.selectorLabels" . | nindent 4 }}
 {{- end }}

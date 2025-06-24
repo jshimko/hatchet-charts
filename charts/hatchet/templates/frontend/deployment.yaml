@@ -4,7 +4,7 @@ kind: Deployment
 metadata:
   name: {{ include "hatchet.fullname" . }}-frontend
   labels:
-    {{- include "hatchet.labels" . | nindent 4 }}
+    {{- include "hatchet.frontend.labels" . | nindent 4 }}
     app.kubernetes.io/component: frontend
 spec:
   {{- if not .Values.frontend.autoscaling.enabled }}
@@ -12,7 +12,7 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "hatchet.selectorLabels" . | nindent 6 }}
+      {{- include "hatchet.frontend.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.frontend.podAnnotations }}
@@ -20,12 +20,12 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "hatchet.labels" . | nindent 8 }}
+        {{- include "hatchet.frontend.labels" . | nindent 8 }}
         {{- with .Values.frontend.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      {{- with .Values.frontend.imagePullSecrets }}
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -46,6 +46,18 @@ spec:
             - name: http
               containerPort: {{ .Values.frontend.service.port }}
               protocol: TCP
+          {{- with .Values.frontend.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.frontend.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.frontend.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.frontend.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

@@ -31,11 +31,11 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Common labels
+Frontend labels
 */}}
-{{- define "hatchet.labels" -}}
+{{- define "hatchet.frontend.labels" -}}
 helm.sh/chart: {{ include "hatchet.chart" . }}
-{{ include "hatchet.selectorLabels" . }}
+{{ include "hatchet.frontend.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -43,10 +43,30 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
-Selector labels
+Backend labels
 */}}
-{{- define "hatchet.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "hatchet.name" . }}
+{{- define "hatchet.backend.labels" -}}
+helm.sh/chart: {{ include "hatchet.chart" . }}
+{{ include "hatchet.backend.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Frontend selector labels
+*/}}
+{{- define "hatchet.frontend.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "hatchet.name" . }}-frontend
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Backend selector labels
+*/}}
+{{- define "hatchet.backend.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "hatchet.name" . }}-backend
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 

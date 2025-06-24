@@ -5,7 +5,7 @@ kind: Ingress
 metadata:
   name: {{ include "hatchet.fullname" . }}-frontend
   labels:
-    {{- include "hatchet.labels" . | nindent 4 }}
+    {{- include "hatchet.frontend.labels" . | nindent 4 }}
   {{- with .Values.frontend.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
