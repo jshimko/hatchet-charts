@@ -1,5 +1,6 @@
 # Default values for hatchet.
 
+# Hatchet Backend (placeholder for multi-service backend deployments)
 backend:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
   replicaCount: 1
@@ -125,6 +126,7 @@ backend:
 
   affinity: {}
 
+# Hatchet Frontend
 frontend:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
   replicaCount: 1
@@ -249,3 +251,84 @@ frontend:
   tolerations: []
 
   affinity: {}
+
+# PGO PostgresCluster deployment
+postgrescluster:
+  # -- disabled by default in case PostgresOperator is not installed in the cluster
+  enabled: true
+
+  # -- PostgresCluster name
+  name: postgres-hatchet
+
+  # -- PostgresCluster annotations
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+    postgres-operator.crunchydata.com/autoCreateUserSchema: "true"
+
+  # -- Postgres users to create and assign access to databases
+  users:
+    # -- db admin
+    # - name: postgres
+
+    # -- app user
+    - name: hatchet
+      databases:
+        - hatchet
+
+  # -- Postgres instances
+  instances:
+    - name: hatchet
+      replicas: 1
+
+      # -- Postgres instance resources
+      resources:
+        {}
+        # requests:
+        #   cpu: 500m
+        #   memory: 1Gi
+        # limits:
+        #   cpu: 1000m
+        #   memory: 2Gi
+
+      dataVolumeClaimSpec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 10Gi
+
+  pgBouncerReplicas: 1
+
+  # pgBackRest Backups
+  # https://pgbackrest.org/user-guide.html
+  # -- https://access.crunchydata.com/documentation/postgres-operator/latest/tutorials/backups-disaster-recovery/backups
+  pgBackRestConfig:
+    # which repo to use when triggering a manual backup
+    manual:
+      repoName: repo1 # in-cluster persistent volume
+      options:
+        - --type=full
+
+    global:
+      # set retention of full backups to 7 days
+      # https://pgbackrest.org/user-guide.html#retention
+
+      # in-cluster persistent volume
+      repo1-retention-full: "7"
+      repo1-retention-full-type: time
+
+    repos:
+      # in-cluster persistent volume
+      - name: repo1
+        volume:
+          volumeClaimSpec:
+            accessModes:
+              - "ReadWriteOnce"
+            resources:
+              requests:
+                storage: 10Gi
+        schedules:
+          # full backup weekly at 12:00a UTC Sunday
+          full: "0 12 * * 0"
+          # differential backup at 12:00 UTC Monday-Saturday
+          differential: "0 12 * * 1-6"
