@@ -5,10 +5,20 @@ metadata:
   name: {{ include "hatchet.fullname" . }}-frontend
   labels:
     {{- include "hatchet.frontend.labels" . | nindent 4 }}
-    app.kubernetes.io/component: frontend
+    {{- with .Values.frontend.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.frontend.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   {{- if not .Values.frontend.autoscaling.enabled }}
   replicas: {{ .Values.frontend.replicaCount }}
+  {{- end }}
+  {{- with .Values.frontend.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   selector:
     matchLabels:
@@ -29,7 +39,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "hatchet.serviceAccountName" . }}-frontend
+      serviceAccountName: {{ include "hatchet.fullname" . }}-frontend
       {{- with .Values.frontend.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -41,19 +51,29 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy | default "IfNotPresent" }}
+          {{- with .Values.frontend.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.frontend.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - name: http
-              containerPort: {{ .Values.frontend.service.port }}
+              containerPort: {{ .Values.frontend.service.targetPort }}
               protocol: TCP
           {{- with .Values.frontend.env }}
           env:
+            {{- include "hatchet.sharedEnv" . | nindent 12 }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.frontend.envFrom }}
           envFrom:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- include "hatchet.sharedEnvFrom" . | nindent 12 }}
+            {{- with .Values.frontend.envFrom }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
           {{- with .Values.frontend.startupProbe }}
           startupProbe:
             {{- toYaml . | nindent 12 }}

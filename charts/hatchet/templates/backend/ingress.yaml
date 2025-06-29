@@ -1,22 +1,25 @@
-{{- if .Values.backend.enabled }}
-{{- if .Values.backend.ingress.enabled -}}
+{{- range $serviceName := list "api" "grpc" "controller" "scheduler" -}}
+{{- if index $.Values $serviceName "enabled" -}}
+{{- $serviceConfig := index $.Values $serviceName -}}
+{{- if $serviceConfig.ingress.enabled }}
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "hatchet.fullname" . }}-backend
+  name: {{ include "hatchet.backendServiceName" (dict "serviceName" $serviceName "context" $) }}
   labels:
-    {{- include "hatchet.backend.labels" . | nindent 4 }}
-  {{- with .Values.backend.ingress.annotations }}
+    {{- include "hatchet.backendServiceLabels" (dict "serviceName" $serviceName "context" $) | nindent 4 }}
+  {{- with $serviceConfig.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  {{- with .Values.backend.ingress.className }}
+  {{- with $serviceConfig.ingress.className }}
   ingressClassName: {{ . }}
   {{- end }}
-  {{- if .Values.backend.ingress.tls }}
+  {{- if $serviceConfig.ingress.tls }}
   tls:
-    {{- range .Values.backend.ingress.tls }}
+    {{- range $serviceConfig.ingress.tls }}
     - hosts:
         {{- range .hosts }}
         - {{ . | quote }}
@@ -25,7 +28,7 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-    {{- range .Values.backend.ingress.hosts }}
+    {{- range $serviceConfig.ingress.hosts }}
     - host: {{ .host | quote }}
       http:
         paths:
@@ -36,10 +39,11 @@ spec:
             {{- end }}
             backend:
               service:
-                name: {{ include "hatchet.fullname" $ }}-backend
+                name: {{ include "hatchet.backendServiceName" (dict "serviceName" $serviceName "context" $) }}
                 port:
-                  number: {{ $.Values.backend.service.port }}
+                  number: {{ $serviceConfig.service.port }}
           {{- end }}
     {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

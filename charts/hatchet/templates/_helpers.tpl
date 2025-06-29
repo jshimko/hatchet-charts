@@ -31,26 +31,12 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Frontend labels
+Global labels
 */}}
-{{- define "hatchet.frontend.labels" -}}
+{{- define "hatchet.labels" -}}
 helm.sh/chart: {{ include "hatchet.chart" . }}
-{{ include "hatchet.frontend.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
+app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
-Backend labels
-*/}}
-{{- define "hatchet.backend.labels" -}}
-helm.sh/chart: {{ include "hatchet.chart" . }}
-{{ include "hatchet.backend.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
@@ -59,29 +45,18 @@ Frontend selector labels
 */}}
 {{- define "hatchet.frontend.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "hatchet.name" . }}-frontend
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: frontend
 {{- end }}
 
 {{/*
-Backend selector labels
+Frontend labels
 */}}
-{{- define "hatchet.backend.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "hatchet.name" . }}-backend
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{- define "hatchet.frontend.labels" -}}
+{{ include "hatchet.frontend.selectorLabels" . }}
+{{ include "hatchet.labels" . }}
 {{- end }}
 
 ####################
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "hatchet.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "hatchet.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
 
 {{/*
 Get list of enabled backend services
@@ -94,8 +69,8 @@ Get list of enabled backend services
 {{- if .Values.grpc.enabled -}}
 {{- $services = append $services "grpc" -}}
 {{- end -}}
-{{- if .Values.controllers.enabled -}}
-{{- $services = append $services "controllers" -}}
+{{- if .Values.controller.enabled -}}
+{{- $services = append $services "controller" -}}
 {{- end -}}
 {{- if .Values.scheduler.enabled -}}
 {{- $services = append $services "scheduler" -}}
@@ -125,13 +100,8 @@ Create backend service labels
 {{- define "hatchet.backendServiceLabels" -}}
 {{- $serviceName := .serviceName -}}
 {{- $context := .context -}}
-helm.sh/chart: {{ include "hatchet.chart" $context }}
-app.kubernetes.io/name: {{ $serviceName }}
-app.kubernetes.io/instance: {{ $context.Release.Name }}
-{{- if $context.Chart.AppVersion }}
-app.kubernetes.io/version: {{ $context.Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ $context.Release.Service }}
+{{ include "hatchet.labels" $context }}
+app.kubernetes.io/name: {{ include "hatchet.backendServiceName" (dict "serviceName" $serviceName "context" $context) }}
 app.kubernetes.io/component: {{ $serviceName }}
 {{- end -}}
 
@@ -141,7 +111,7 @@ Create backend service selector labels
 {{- define "hatchet.backendServiceSelectorLabels" -}}
 {{- $serviceName := .serviceName -}}
 {{- $context := .context -}}
-app.kubernetes.io/name: {{ $serviceName }}
+app.kubernetes.io/name: {{ include "hatchet.backendServiceName" (dict "serviceName" $serviceName "context" $context) }}
 app.kubernetes.io/instance: {{ $context.Release.Name }}
 app.kubernetes.io/component: {{ $serviceName }}
 {{- end -}}
@@ -157,5 +127,91 @@ Create backend service account name
 {{- default (include "hatchet.backendServiceName" (dict "serviceName" $serviceName "context" $context)) $serviceConfig.serviceAccount.name -}}
 {{- else -}}
 {{- default "default" $serviceConfig.serviceAccount.name -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Generate shared environment variables for all Hatchet services
+This helper generates common environment variables that should be available
+to all backend services and jobs, including database connections, GRPC settings,
+and other shared configuration.
+*/}}
+{{- define "hatchet.sharedEnv" -}}
+{{- $context := . -}}
+
+{{- with  $context.Values.sharedConfig.env -}}
+{{- toYaml . -}}
+{{- end -}}
+
+{{- if $context.Values.postgrescluster.enabled }}
+- name: PGBOUNCER_URI
+  valueFrom:
+    secretKeyRef:
+      name: "postgres-hatchet-pguser-hatchet"
+      key: "pgbouncer-uri"
+# append sslmode=require to the pgbouncer URI
+- name: DATABASE_URL
+  value: "$(PGBOUNCER_URI)?sslmode=require"
+{{- end }}
+
+{{- if $context.Values.rabbitmqcluster.enabled }}
+- name: RABBITMQ_USERNAME
+  valueFrom:
+    secretKeyRef:
+      name: "rabbitmq-hatchet-default-user"
+      key: "username"
+- name: RABBITMQ_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: "rabbitmq-hatchet-default-user"
+      key: "password"
+- name: RABBITMQ_HOST
+  valueFrom:
+    secretKeyRef:
+      name: "rabbitmq-hatchet-default-user"
+      key: "host"
+- name: RABBITMQ_PORT
+  valueFrom:
+    secretKeyRef:
+      name: "rabbitmq-hatchet-default-user"
+      key: "port"
+# build URL from username, password, host, and port above
+- name: SERVER_TASKQUEUE_RABBITMQ_URL
+  value: "amqp://$(RABBITMQ_USERNAME):$(RABBITMQ_PASSWORD)@$(RABBITMQ_HOST):$(RABBITMQ_PORT)/"
+{{- end }}
+
+{{- if $context.Values.postgres.enabled }}
+- name: DATABASE_URL
+  value: {{ printf "postgres://%s:%s@%s-postgres:%d/%s?sslmode=%s" $context.Values.postgres.auth.username $context.Values.postgres.auth.password $context.Release.Name ($context.Values.postgres.primary.service.ports.postgresql | int) $context.Values.postgres.auth.database (ternary "require" "disable" $context.Values.postgres.tls.enabled) }}
+- name: DATABASE_POSTGRES_HOST
+  value: {{ printf "%s-postgres" $context.Release.Name }}
+- name: DATABASE_POSTGRES_PORT
+  value: {{ $context.Values.postgres.primary.service.ports.postgresql | quote }}
+- name: DATABASE_POSTGRES_USERNAME
+  value: {{ $context.Values.postgres.auth.username | quote }}
+- name: DATABASE_POSTGRES_PASSWORD
+  value: {{ $context.Values.postgres.auth.password | quote }}
+- name: DATABASE_POSTGRES_DATABASE
+  value: {{ $context.Values.postgres.auth.database | quote }}
+{{- end }}
+
+{{- if $context.Values.rabbitmq.enabled }}
+- name: SERVER_TASKQUEUE_RABBITMQ_URL
+  value: {{ printf "amqp://%s:%s@%s-rabbitmq:%d/" $context.Values.rabbitmq.auth.username $context.Values.rabbitmq.auth.password $context.Release.Name ($context.Values.rabbitmq.service.ports.amqp | int) }}
+- name: SERVER_TASKQUEUE_RABBITMQ_HOST
+  value: {{ printf "%s-rabbitmq" $context.Release.Name }}
+- name: SERVER_TASKQUEUE_RABBITMQ_PORT
+  value: {{ $context.Values.rabbitmq.service.ports.amqp | quote }}
+- name: SERVER_TASKQUEUE_RABBITMQ_USERNAME
+  value: {{ $context.Values.rabbitmq.auth.username | quote }}
+- name: SERVER_TASKQUEUE_RABBITMQ_PASSWORD
+  value: {{ $context.Values.rabbitmq.auth.password | quote }}
+{{- end }}
+{{- end -}}
+
+{{- define "hatchet.sharedEnvFrom" -}}
+{{- $context := . -}}
+{{- with  $context.Values.sharedConfig.envFrom -}}
+{{- toYaml . -}}
 {{- end -}}
 {{- end -}}
